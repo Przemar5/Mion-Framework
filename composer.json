@@ -1,0 +1,13 @@
+{
+    "name": "mion/framework",
+    "type": "framework",
+    "require": {
+        "phpmailer/phpmailer": "^6.1"
+    },
+    "authors": [
+        {
+            "name": "Przemek Krogulski",
+            "email": "przemar5@o2.pl"
+        }
+    ]
+}
