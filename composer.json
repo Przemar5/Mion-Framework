@@ -2,7 +2,8 @@
     "name": "mion/framework",
     "type": "framework",
     "require": {
-        "phpmailer/phpmailer": "^6.1"
+        "phpmailer/phpmailer": "^6.1",
+        "phpunit/phpunit": "^9.1"
     },
     "authors": [
         {

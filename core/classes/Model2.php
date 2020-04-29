@@ -5,7 +5,7 @@ use Core\Classes\Database;
 use App\Models\UserModel;
 
 
-class Model
+class Model2
 {
 	private $_db,
 			$_table,
@@ -16,7 +16,7 @@ class Model
 	
 	public function __construct($table)
 	{
-		$this->_db = Database::getInstance();
+		$this->_db = Database2::getInstance();
 		$this->_table = $table;
 		$this->_softDelete = true;
 	}
@@ -35,7 +35,10 @@ class Model
 	
 	public function find($data)
 	{
-		return $this->_db->select($this->_table, $data);
+		if ($result = $this->_db->select($this->_table, $data))
+		{
+			$this->_existsInDatabase = true;
+		}
 	}
 	
 	public function findFirst($data)
@@ -44,6 +47,20 @@ class Model
 		
 		return $this->_db->select($this->_table, $data, true, ['multiple' => false]);
 	}
+
+	public function insert($data = [])
+	{
+
+	}
+
+	public function save($data = [])
+	{
+		if (!empty($this->{$this->_primaryKey}))
+		{
+			return $this->_db->update($this->_table, $data);
+		}
+		
+	}
 	
 	public function delete($data = [])
 	{
@@ -51,7 +68,7 @@ class Model
 		{
 			return $this->_db->delete($this->_table, $data);
 		}
-		else
+		else if (!empty($this->{$this->_primaryKey}))
 		{
 			$data = [
 				'conditions' => $this->_primaryKey . ' = ?',
@@ -60,6 +77,10 @@ class Model
 			
 			return $this->_db->delete($this->_table, $data);
 		}
+		else
+		{
+			return false;
+		}
 	}
 	
 	public function deleteWhere($values)
@@ -67,7 +88,7 @@ class Model
 		$data = [
 			'conditions' => '',
 			'bind' => []
-		]
+		];
 		
 		foreach ($values as $field => $value)
 		{

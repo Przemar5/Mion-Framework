@@ -12,14 +12,14 @@ use Core\Classes\TypeHelper;
 
 class Database
 {
-	private static $_instance = null;
-	private $_pdo, 
-			$_query, 
-			$_error = false, 
-			$_result, 
-			$_count = 0, 
-			$_lastInsertId = null, 
-			$_validQueryArguments;
+	private static ?self $_instance = null;
+	private \PDO $_pdo;
+	private ?\PDOStatement $_query;
+ 	private bool $_error = false;
+	private $_result;
+	private int $_count = 0;
+	private $_lastInsertId = null;
+	private $_validQueryArguments;
 	
 	
 	public function __construct()

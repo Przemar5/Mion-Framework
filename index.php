@@ -8,6 +8,9 @@ use Core\Classes\CustomError;
 use Core\Classes\Router;
 use Core\Classes\Session;
 use Core\Classes\URL;
+use Core\Classes\Database;
+use Core\Classes\Database2;
+use Core\Classes\Model2;
 
 
 require_once 'config/config.php';
@@ -23,7 +26,6 @@ else
 	error_reporting(-1);
 	ini_set('display_errors', 0);
 }
-
 
 // Errors logging
 ini_set('log_errors', 1);
@@ -95,7 +97,11 @@ spl_autoload_register('autoload');
 // There wasn't any output before, so session could start here
 Session::start();
 
+$model = new Model2('users');
 
+dd($model);
+
+die;
 if (!Session::exists(SESSION_USER_ID_NAME) && 
 	Cookie::exists(COOKIE_REMEMBER_ME_NAME))
 	Auth::getRememberedUser();

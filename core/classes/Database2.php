@@ -6,7 +6,7 @@ use \PDO;
 use \PDOException;
 
 
-class Database
+class Database2
 {
 	private static $_instance = null;
 	private const DB_TYPE = 'mysql',
@@ -25,7 +25,7 @@ class Database
 			$_queryParts;
 	
 	
-	private function __construct()
+	public function __construct()
 	{
 		$dsn = self::DB_TYPE . ':host=' . self::DB_HOST . ';dbname=' . 
 				self::DB_NAME . ';charset=' . self::DB_CHARSET;
