@@ -8,21 +8,21 @@ use \PDOException;
 
 class Database2
 {
-	private static $_instance = null;
+	private static ?self $_instance = null;
 	private const DB_TYPE = 'mysql',
 				  DB_HOST = '127.0.0.1',
 				  DB_USERNAME = 'root',
 				  DB_PASSWORD = '',
 				  DB_NAME = 'play_and_learn',
 				  DB_CHARSET = 'utf8';
-	private $_pdo, 
-			$_query = '', 
-			$_stmt,
-			$_result,
-			$_error = false,
-			$_count,
-			$_lastInsrtId,
-			$_queryParts;
+	private \PDO $_pdo;
+	private \PDOStatement $_stmt;
+	private mixed $_result;
+	private bool $_error = false;
+	private int $_count;
+	private int $_lastInsrtId;
+	private string $_lastExecutedQuery;
+	private array $_queryParts;
 	
 	
 	public function __construct()
@@ -45,7 +45,7 @@ class Database2
 		}
 	}
 	
-	public static function getInstance()
+	public static function getInstance(): self
 	{
 		if (!isset(self::$_instance))
 		{
@@ -55,18 +55,18 @@ class Database2
 		return self::$_instance;
 	}
 	
-	public function debugDumpParams()
+	public function debugDumpParams(): void
 	{
 		$this->_stmt->debugDumpParams();
 	}
 	
-	public function select(string $table, $data, $fetch = true, $fetchOptions = [], $validate = false)
+	public function select(string $table, array $data, bool $fetch = true, array $fetchOptions = [], bool $checkBeforeFetch = false): mixed
 	{
 		try
 		{
 			$this->_error = false;
 			
-			if ($this->buildSelectQuery($table, $data))
+			if ($query = $this->buildSelectQuery($table, $data))
 			{
 				if ($fetch && $this->checkMode($fetchMode))
 				{
@@ -81,21 +81,22 @@ class Database2
 					{
 						foreach ($data['bind'] as $param)
 						{
-							$this->_stmt->bindValue($i, $param);
-							$i++;
+							$this->_stmt->bindValue($i++, $param);
 						}
 					}
 				}
 
 				if ($this->_stmt->execute())
 				{
+					$this->_lastExecutedQuery = $query;
+
 					if ($fetch)
 					{
 						return $this->fetch($fetchOptions['mode'] ?? null, 
 											$fetchOptions['class'] ?? null,
 											$fetchOptions['multiple'] ?? null,
-											$validate);
-					}
+											$checkBeforeFetch);
+				}
 				}
 				else
 				{
@@ -111,16 +112,13 @@ class Database2
 		}
 	}
 	
-	public function fetch($mode, $class = false, $multiple = true, $check = true)
+	public function fetch(int $mode = PDO::FETCH_OBJ, ?string $class, ?bool $multiple = true, bool $check = true): mixed
 	{
 		try
 		{
-			if ($check)
+			if ($check && $this->checkmode($mode))
 			{
-				if ($this->checkmode($mode))
-				{
-					$class = $this->prepareClass($class);
-				}
+				$class = $this->prepareClass($class);
 			}
 			
 			$fetchFunction = ($multiple) ? 'fetchAll' : 'fetch';
@@ -139,24 +137,19 @@ class Database2
 		}
 	}
 	
-	public function checkMode($fetchMode = null)
+	public function checkMode(int $fetchMode): bool
 	{
-		if (!is_integer($fetchMode))
-		{
-			throw new \Exception("fetch mode must be type 'integer'," . 
-								" not " . gettype($fetchMode) . ".");
-		}
-		else if (!in_array($fetchMode, [
-				   PDO::FETCH_ASSOC,
-				   PDO::FETCH_BOTH,
-				   PDO::FETCH_BOUND,
-				   PDO::FETCH_CLASS,
-				   PDO::FETCH_INTO,
-				   PDO::FETCH_LAZY, 
-				   PDO::FETCH_NAMED,
-				   PDO::FETCH_NUM,
-				   PDO::FETCH_OBJ
-			   ]))
+		if (!in_array($fetchMode, [
+			   PDO::FETCH_ASSOC,
+			   PDO::FETCH_BOTH,
+			   PDO::FETCH_BOUND,
+			   PDO::FETCH_CLASS,
+			   PDO::FETCH_INTO,
+			   PDO::FETCH_LAZY, 
+			   PDO::FETCH_NAMED,
+			   PDO::FETCH_NUM,
+			   PDO::FETCH_OBJ
+		   ]))
 		{
 			throw new \Exception('Given fetch mode is invalid.');
 		}
@@ -164,36 +157,30 @@ class Database2
 		return true;
 	}
 	
-	public function prepareClass($class = false)
+	public function prepareClass(string $class): string
 	{
-		if (!empty(trim($class)))
-		{
-			if (!is_string($class))
-			{
-				throw new \Exception("Class name must be of type 'string'," . 
-									" not " . gettype($class) . ".");
-			}
-			else if (!class_exists($class))
-			{
-				throw new \Exception("Class '$class' does not exist in available namespaces.");
-			}
+		$class = trim($class);
 
-			return trim($class);
+		if (!class_exists($class))
+		{
+			throw new \Exception("Class '$class' does not exist in available namespaces.");
 		}
-		
-		return false;
+		else 
+		{
+			return $class;
+		}
 	}
 	
-	public function insert(string $table, $data)
+	public function insert(string $table, array $data): bool
 	{
-		$this->buildInsertQuery($table, $data);
+		$query = $this->buildInsertQuery($table, array_keys($data));
 		
-		return $this->query($this->_query, array_values($data));
+		return $this->query($query, array_values($data));
 	}
 	
-	public function update(string $table, $data)
+	public function update(string $table, string $mainKey, int $keyValue, array $data): mixed
 	{
-		$this->buildUpdateQuery($table, $data);
+		$query = $this->buildUpdateQuery($table, $mainKey, array_keys($data));
 		
 		try
 		{
@@ -204,7 +191,10 @@ class Database2
 					throw new \Exception("Values to bind must be an 'array' type," .
 										" not " . gettype($data['bind']) . ".");
 				}
-				$data['values'] = array_merge(array_values($data['values']), $data['bind']);
+				else 
+				{
+					$data['values'] = array_merge(array_values($data['values']), $data['bind'], $keyValue);
+				}
 			}
 		}
 		catch (\Exception $e)
@@ -212,16 +202,19 @@ class Database2
 			die($e->getMessage());
 		}
 		
-		if ($this->query($this->_query, $data['values']))
+		if ($this->query($query, $data['values']))
 		{
 			return $this->_count;
 		}
-		return 2;
+		else 
+		{
+			return false;
+		}
 	}
 	
-	public function delete(string $table, $data)
+	public function delete(string $table, array $data): mixed
 	{
-		$this->buildDeleteQuery($table, $data);
+		$query = $this->buildDeleteQuery($table, $data);
 		
 		try
 		{
@@ -243,14 +236,17 @@ class Database2
 			die($e->getMessage());
 		}
 		
-		if ($this->query($this->_query, $data['bind']))
+		if ($this->query($query, $data['bind']))
 		{
 			return $this->_count;
 		}
-		return false;
+		else 
+		{
+			return false;
+		}
 	}
 	
-	public function execute($query)
+	public function execute(string $query)
 	{
 		$this->_stmt = $this->_pdo->prepare($query);
 		$this->_stmt->execute();
@@ -260,7 +256,7 @@ class Database2
 		return $this->_result;
 	}
 	
-	public function query($query, $params = [])
+	public function query(string $query, array $params = []): bool
 	{
 		try
 		{
@@ -269,7 +265,7 @@ class Database2
 				throw new \Exception('Could not prepare query.');
 			}
 			
-			if (!empty($params) && is_array($params))
+			if (!empty($params))
 			{
 				$i = 1;
 
@@ -282,6 +278,7 @@ class Database2
 
 			if ($this->_stmt->execute())
 			{
+				$this->_lastExecutedQuery = $query;
 				$this->_lastInsertId = $this->_pdo->lastInsertId();
 				$this->_count = $this->_stmt->rowCount();
 			}
@@ -298,21 +295,21 @@ class Database2
 		}
 	}
 	
-	public function buildSelectQuery(string $table, $data)
+	public function buildSelectQuery(string $table, array $data): string
 	{
 		extract($data);
 		
 		try
 		{
-			$this->_query = 'SELECT';
-			$this->_query .= $this->_getValuesQueryPart($values ?? '');
-			$this->_query .= ' FROM ';
-			$this->_query .= $this->_getTableQueryPart($table);
-			$this->_query .= $this->_getConditionsQueryPart($conditions ?? '');
-			$this->_query .= $this->_getLimitQueryPart($limit ?? '');
-			$this->_query .= $this->_getOffsetQueryPart($offset ?? '');
+															$query = 'SELECT';
+			if (isset($values) && !empty($values)) 			$query .= $this->_getValuesQueryPart($values);
+															$query .= ' FROM ';
+															$query .= $this->_getTableQueryPart($table);
+			if (isset($conditions) && !empty($conditions)) 	$query .= $this->_getConditionsQueryPart($conditions);
+			if (isset($limit) && !empty($limit)) 			$query .= $this->_getLimitQueryPart($limit);
+			if (isset($offset) && !empty($offset)) 			$query .= $this->_getOffsetQueryPart($offset);
 			
-			return true;
+			return $query;
 		}
 		catch (\Exception $e)
 		{
@@ -320,29 +317,27 @@ class Database2
 		}
 	}
 	
-	public function buildInsertQuery(string $table, $data)
+	public function buildInsertQuery(string $table, array $data): string
 	{
-		extract($data);
-		
 		try
 		{
-			$fieldsString = " (";
-			$valuesString = " VALUES (";
+			$fieldsString = ' (';
+			$valuesString = ' VALUES (';
 			
-			foreach ($data as $key => $value)
+			foreach ($data as $key)
 			{
-				$fieldsString .= "`" . $key . "`, ";
-				$valuesString .= "?, ";
+				$fieldsString .= '`' . $key . '`, ';
+				$valuesString .= '?, ';
 			}
 			
 			$fieldsString = preg_replace('/, $/', ') ', $fieldsString);
 			$valuesString = preg_replace('/, $/', ') ', $valuesString);
 			
-			$this->_query = "INSERT INTO ";
-			$this->_query .= $this->_getTableQueryPart($table);
-			$this->_query .= $fieldsString . $valuesString;
+			$query = 'INSERT INTO ';
+			$query .= $this->_getTableQueryPart($table);
+			$query .= $fieldsString . $valuesString;
 			
-			return true;
+			return $query;
 		}
 		catch (\Exception $e)
 		{
@@ -350,29 +345,38 @@ class Database2
 		}
 	}
 	
-	public function buildUpdateQuery(string $table, $data)
+	public function buildUpdateQuery(string $table, string $mainKey, array $data): string
+	{
+		try
+		{
+		    $valuesString = implode(',', array_map(fn(string $a) => ' ' . $a . ' = ?'));
+
+			$query = 'UPDATE ';
+			$query .= $this->_getTableQueryPart($table);
+			$query .= ' SET' . $valuesString;
+			$query .= ' WHERE ' . $mainKey . ' = ?';
+			
+			return $query;
+		}
+		catch (\Exception $e)
+		{
+			die($e->getMessage());
+		}
+	}
+	
+	public function buildDeleteQuery(string $table, array $data): string
 	{
 		extract($data);
 		
 		try
 		{
-			$valuesString = "";
+															$query = 'DELETE FROM ';
+															$query .= $this->_getTableQueryPart($table);
+			if (isset($conditions) && !empty($conditions)) 	$query .= $this->_getConditionsQueryPart($conditions);
+			if (isset($limit) && !empty($limit)) 			$query .= $this->_getLimitQueryPart($limit);
+			if (isset($offset) && !empty($offset)) 			$query .= $this->_getOffsetQueryPart($offset);
 			
-			foreach ($values as $key => $value)
-			{
-				$valuesString .= " $key = ?,";
-			}
-			
-			$valuesString = preg_replace('/,$/', ' ', $valuesString);
-			
-			$this->_query = "UPDATE ";
-			$this->_query .= $this->_getTableQueryPart($table) . '';
-			$this->_query .= " SET" . $valuesString;
-			$this->_query .= $this->_getConditionsQueryPart($conditions ?? '');
-			$this->_query .= $this->_getLimitQueryPart($limit ?? '');
-			$this->_query .= $this->_getOffsetQueryPart($offset ?? '');
-			
-			return true;
+			return $query;
 		}
 		catch (\Exception $e)
 		{
@@ -380,34 +384,9 @@ class Database2
 		}
 	}
 	
-	public function buildDeleteQuery(string $table, $data)
+	public function buildQuery(array $data, array $queryParts = []): string
 	{
-		extract($data);
-		
-		try
-		{
-			$this->_query = 'DELETE FROM ';
-			$this->_query .= $this->_getTableQueryPart($table);
-			$this->_query .= $this->_getConditionsQueryPart($conditions ?? '');
-			$this->_query .= $this->_getLimitQueryPart($limit ?? '');
-			$this->_query .= $this->_getOffsetQueryPart($offset ?? '');
-			
-			return true;
-		}
-		catch (\Exception $e)
-		{
-			die($e->getMessage());
-		}
-	}
-	
-	public function buildQuery($data = [], $queryParts = [])
-	{
-		$this->_query = '';
-		
-		if (empty($data))
-		{
-			return false;
-		}
+		$query = '';
 		
 		foreach ($queryParts as $queryPart)
 		{
@@ -417,93 +396,32 @@ class Database2
 				
 				if (method_exists($this, $methodName))
 				{
-					$this->_query .= $this->{$methodName}($data[$queryPart] ?? '');
+					$query .= $this->{$methodName}($data[$queryPart]);
 				}
 			}
 		}
 		
-		return $this->_query;
+		return $query;
 	}
 	
-	public function clearQuery()
+	private function _getValuesQueryPart($values): string
 	{
-		$this->_query = '';
-		$this->_action = '';
-	}
-	
-	public function getQuery()
-	{
-		return $this->_query;
-	}
-	
-	public function getAction()
-	{
-		return $this->_action;
-	}
-	
-	private function _getActionQueryPart($action)
-	{
-		if (!is_string($action))
+		if (is_string($values))
 		{
-			throw new \Exception("Action name must be type 'string'.");
-		}
-		
-		$action = strtoupper(trim($action));
+			$values = trim($values);
 
-		if (empty($action))
-		{
-			throw new \Exception("Action name is required.");
-		}
-
-		if (in_array($action, ['SELECT', 'INSERT', 'UPDATE', 'DELETE']))
-		{
-			if (empty($this->_action))
-			{
-				$this->_action = $action;
-			}
-			return $action;
-		}
-		else 
-		{
-			throw new \Exception("Action has invalid name. Possible action names are: " . 
-								"'SELECT', 'INSERT', 'UPDATE' and 'DELETE'.");
-		}
-	}
-	
-	private function _getValuesQueryPart($values = '')
-	{
-		if (empty($values) || (is_string($values) && empty(trim($values))))
-		{
-			return ' *';
-		}
-		else if (is_string($values))
-		{
-			return ' ' . trim($values);
+			return (!empty($values)) ? (' ' . $values) : ' *';
 		}
 		else if (is_array($values))
 		{
-			$valuesString = '';
+			// $reduceCallable = function(string $carry, string $item) {
+			// 	$item = trim($item);
+			// 	return (!empty($item)) ? ($carry . ', ' . $item) : $carry;
+			// };
 
-			foreach ($values as $value)
-			{
-				if (!is_string($value))
-				{
-					throw new \Exception("Values must be type 'string', " . 
-										 "not " . gettype($value) . ".");
-				}
+			// return ' ' . ltrim(array_reduce($arr, 'reduceCallable'), ', ');
 
-				if (!empty(trim($value))) 
-				{
-					$valuesString .= trim($value) . ', ';
-				}
-			}
-
-			if (empty($valuesString))
-			{
-				return false;
-			}
-
-			return ' ' . preg_replace('/, $/', '', $valuesString);
+			return ' ' . implode(', ', array_map('trim', array_filter($values, fn(string $a) => !empty(trim($a)))));
 		}
 		else 
 		{
@@ -512,67 +430,46 @@ class Database2
 		}
 	}
 	
-	private function _getTableQueryPart($table)
+	private function _getTableQueryPart(string $table): string
 	{
-		if (!is_string($table))
-		{
-			throw new \Exception("Table name must be type 'string', not " . 
-							 	gettype($table) . ".");
-		}
-		
 		$table = trim($table);
 		
 		if (empty($table))
 		{
-			throw new \Exception("Table name is required.");
+			throw new \Exception('Table name is required.');
 		}
 		
 		return $table;
 	}
 	
-	private function _getConditionsQueryPart($conditions = '')
+	private function _getConditionsQueryPart(string $conditions): string
 	{
-		if (!is_string($conditions))
-		{
-			throw new \Exception("Conditions must be passed as a 'string', not" . 
-								 gettype($conditions) . ".");
-		}
-		
-		return (!empty(trim($conditions))) ? ' WHERE ' . trim($conditions) : '';
+		return ' WHERE ' . $conditions;
 	}
 	
-	private function _getLimitQueryPart($limit = '')
+	private function _getLimitQueryPart(int $limit): string
 	{
-		if (empty($limit) || (is_string($limit) && empty(trim($limit))))
+		if ($limit < 0)
 		{
-			return '';
+			throw new \Exception('Limit must be equal or greater than 0.');
 		}
-		else if (is_integer($limit) || is_numeric($limit))
-		{
-			return ' LIMIT ' . $limit;
-		}
-		else 
-		{
-			throw new \Exception("Limit must be type 'integer' or " . 
-								 "numeric 'string', not " . gettype($limit) . ".");
-		}
+
+		return ' LIMIT ' . $limit;
 	}
 	
-	private function _getOffsetQueryPart($offset = '')
+	private function _getOffsetQueryPart(int $offset): string
 	{
-		if (empty($offset) || (is_string($offset) && empty(trim($offset))))
+		if ($offset < 0)
 		{
-			return '';
+			throw new \Exception('Offset must be equal or greater than 0.');
 		}
-		else if (is_integer($offset) || is_numeric($offset))
-		{
-			return ' OFFSET ' . $offset;
-		}
-		else 
-		{
-			throw new \Exception("Offset must be type 'integer' or " . 
-								 "numeric 'string', not " . gettype($offset) . ".");
-		}
+
+		return ' OFFSET ' . $offset;
+	}
+	
+	public function getLastExecutedQuery(): ?string
+	{
+		return $this->_lastExecutedQuery;
 	}
 	
 	public function lastInsertId()

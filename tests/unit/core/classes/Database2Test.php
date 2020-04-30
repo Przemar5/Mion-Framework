@@ -30,9 +30,55 @@ class Database2Test extends TestCase
 		$this->assertInstanceOf(Database2::class, $this->db);
 	}
 	
+	// buildSelectQuery
+
 	/** @test */
-	public function getInstance_returns_object_self()
+	public function buildSelectQuery_returns_valid_query()
 	{
-		
+		// #1
+		$data = [
+			'values' => ['email', 'username'],
+			'bind' => [1],
+			'conditions' => 'id = ?'
+		];
+		$query = $this->db->buildSelectQuery('friend', $data);
+
+		$this->assertEquals($query, 'SELECT email, username FROM friend WHERE id = ?');
+
+
+		// #2
+		$data = [
+			'values' => ['email', 'username'],
+			'bind' => [1],
+			'conditions' => 'id = ?',
+			'limit' => 2
+		];
+		$query = $this->db->buildSelectQuery('friend', $data);
+
+		$this->assertEquals($query, 'SELECT email, username FROM friend WHERE id = ? LIMIT 2');
+
+
+		// #3
+		$data = [
+			'values' => ['email', 'username'],
+			'bind' => [1],
+			'conditions' => 'id = ?',
+			'offset' => 1
+		];
+		$query = $this->db->buildSelectQuery('friend', $data);
+
+		$this->assertEquals($query, 'SELECT email, username FROM friend WHERE id = ? OFFSET 1');
+
+
+		// #3
+		$data = [
+			'values' => ['email', 'username'],
+			'bind' => [1],
+			'conditions' => 'id = ?',
+			'offset' => -1
+		];
+		$query = $this->db->buildSelectQuery('friend', $data);
+
+		$this->expectOutputString('Offset must be equal or greater than 0.');
 	}
 }

@@ -7,11 +7,12 @@ use App\Models\UserModel;
 
 class Model2
 {
-	private $_db,
-			$_table,
-			$_modelName,
-			$_primaryKey = 'id',
-			$_softDelete = false;
+	protected Database2 $_db;
+	protected string $_table;
+	protected string $_modelName;
+	protected string $_primaryKey = 'id';
+	protected bool $_softDelete = false;
+	protected array $_tableData;
 			
 	
 	public function __construct($table)
@@ -32,6 +33,25 @@ class Model2
 	{
 		return MODELS_NAMESPACE . $model . 'Model';
 	}
+
+	public function getTableData()
+	{
+		if (!empty($this->_tableData))
+		{
+			$result = [];
+
+			foreach ($this->_tableData as $column)
+			{
+				$result[$column] = $this->{$column};
+			}
+
+			return $result;
+		}
+		else
+		{
+			return [];
+		}
+	}
 	
 	public function find($data)
 	{
@@ -48,18 +68,45 @@ class Model2
 		return $this->_db->select($this->_table, $data, true, ['multiple' => false]);
 	}
 
-	public function insert($data = [])
+	public function insert($data = [], $check = true)
 	{
+		if (empty($data))
+		{
+			$data = $this->getTableData();
+		}
 
+		if (($check && $this->validate($data)) || !$check)
+		{
+			return $this->_db->insert($this->_table, $data);
+		}
+	}
+
+	public function update($data = [], $check = true)
+	{
+		if (empty($data))
+		{
+			$data = $this->getTableData();
+		}
+
+		if ((($check && $this->validate($data)) || !$check) && 
+			!empty($this->{$this->_primaryKey}))
+		{
+			return $this->_db->update($this->_table, $data);
+		}
 	}
 
 	public function save($data = [])
 	{
+		// I know that judging if the record already exists in database
+		// by checking if it has primary key is not good idea
 		if (!empty($this->{$this->_primaryKey}))
 		{
 			return $this->_db->update($this->_table, $data);
 		}
-		
+		else
+		{
+
+		}
 	}
 	
 	public function delete($data = [])
