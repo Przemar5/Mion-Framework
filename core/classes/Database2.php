@@ -1,5 +1,6 @@
 <?php
 
+declare(strict_types = 1);
 
 namespace Core\Classes;
 use \PDO;
@@ -173,14 +174,28 @@ class Database2
 	
 	public function insert(string $table, array $data): bool
 	{
-		$query = $this->buildInsertQuery($table, array_keys($data));
+		try
+		{
+			$query = $this->buildInsertQuery($table, array_keys($data));
+		}
+		catch (\Exception $e)
+		{
+			die($e->getMessage());
+		}
 		
 		return $this->query($query, array_values($data));
 	}
 	
 	public function update(string $table, string $mainKey, int $keyValue, array $data): mixed
 	{
-		$query = $this->buildUpdateQuery($table, $mainKey, array_keys($data));
+		try
+		{
+			$query = $this->buildUpdateQuery($table, $mainKey, array_keys($data));
+		}
+		catch (\Exception $e)
+		{
+			die($e->getMessage());
+		}
 		
 		try
 		{
@@ -214,7 +229,14 @@ class Database2
 	
 	public function delete(string $table, array $data): mixed
 	{
-		$query = $this->buildDeleteQuery($table, $data);
+		try
+		{
+			$query = $this->buildDeleteQuery($table, $data);
+		}
+		catch (\Exception $e)
+		{
+			die($e->getMessage());
+		}
 		
 		try
 		{
@@ -298,90 +320,125 @@ class Database2
 	public function buildSelectQuery(string $table, array $data): string
 	{
 		extract($data);
+
+		// $cond = function($a) => isset($a) && !empty($a);
+
+		$query = 'SELECT ';
+		$query .= $this->_getValuesQueryPart($values);
+		$query .= ' FROM ';
+		$query .= $this->_getTableQueryPart($table);
+		$query .= $this->_getConditionsQueryPart($conditions);
+		$query .= $this->_getLimitQueryPart($limit);
+		$query .= $this->_getOffsetQueryPart($offset);
 		
-		try
-		{
-															$query = 'SELECT';
-			if (isset($values) && !empty($values)) 			$query .= $this->_getValuesQueryPart($values);
-															$query .= ' FROM ';
-															$query .= $this->_getTableQueryPart($table);
-			if (isset($conditions) && !empty($conditions)) 	$query .= $this->_getConditionsQueryPart($conditions);
-			if (isset($limit) && !empty($limit)) 			$query .= $this->_getLimitQueryPart($limit);
-			if (isset($offset) && !empty($offset)) 			$query .= $this->_getOffsetQueryPart($offset);
-			
-			return $query;
-		}
-		catch (\Exception $e)
-		{
-			die($e->getMessage());
-		}
+		return $query;
 	}
 	
 	public function buildInsertQuery(string $table, array $data): string
 	{
-		try
+		if ($data === [])
 		{
-			$fieldsString = ' (';
-			$valuesString = ' VALUES (';
-			
-			foreach ($data as $key)
+			throw new \Exception('You must specify columns to insert data in.');
+		}
+
+		$fieldsString = ' (';
+		$valuesString = ' VALUES (';
+		
+		foreach ($data as $key)
+		{
+			if (!is_string($key))
 			{
-				$fieldsString .= '`' . $key . '`, ';
-				$valuesString .= '?, ';
+				throw new \Exception("Some column name is type '" . gettype($key) . 
+									"', but all keys must be type 'string'.");
 			}
-			
-			$fieldsString = preg_replace('/, $/', ') ', $fieldsString);
-			$valuesString = preg_replace('/, $/', ') ', $valuesString);
-			
-			$query = 'INSERT INTO ';
-			$query .= $this->_getTableQueryPart($table);
-			$query .= $fieldsString . $valuesString;
-			
-			return $query;
+			else if (($key = trim($key)) === '')
+			{
+				continue;
+			}
+			else if (!preg_match('#^[a-zA-Z_][0-9a-zA-Z_\.]*$#', $key))
+			{
+				throw new \Exception("Some column name isn't valid.");
+			}
+			$fieldsString .= $key . ', ';
+			$valuesString .= '?, ';
 		}
-		catch (\Exception $e)
+
+		if ($fieldsString === ' (')
 		{
-			die($e->getMessage());
+			throw new \Exception('You must specify columns to insert data in.');
 		}
+		
+		$fieldsString = preg_replace('/, $/', ')', $fieldsString);
+		$valuesString = preg_replace('/, $/', ')', $valuesString);
+		
+		$query = 'INSERT INTO ';
+		$query .= $this->_getTableQueryPart($table);
+		$query .= $fieldsString . $valuesString;
+		
+		return $query;
 	}
 	
-	public function buildUpdateQuery(string $table, string $mainKey, array $data): string
+	public function buildUpdateQuery(string $table, array $data, array $additionalData): string
 	{
-		try
+		if ($additionalData === [])
 		{
-		    $valuesString = implode(',', array_map(fn(string $a) => ' ' . $a . ' = ?'));
+			throw new \Exception('You must specify which rows you want to modify.');
+		}
 
-			$query = 'UPDATE ';
-			$query .= $this->_getTableQueryPart($table);
-			$query .= ' SET' . $valuesString;
-			$query .= ' WHERE ' . $mainKey . ' = ?';
-			
-			return $query;
-		}
-		catch (\Exception $e)
+		if ($data === [])
 		{
-			die($e->getMessage());
+			throw new \Exception('You must specify columns to update data.');
 		}
+
+		$valuesString = '';
+		
+		foreach ($data as $key)
+		{
+			if (!is_string($key))
+			{
+				throw new \Exception("Some column name is type '" . gettype($key) . 
+									"', but all keys must be type 'string'.");
+			}
+			else if (($key = trim($key)) === '')
+			{
+				continue;
+			}
+			else if (!preg_match('#^[a-zA-Z_][0-9a-zA-Z_\.]*$#', $key))
+			{
+				throw new \Exception("Some column name isn't valid.");
+			}
+
+			$valuesString .= $key . ' = ?, ';
+		}
+
+		if ($valuesString === '')
+		{
+			throw new \Exception('You must specify columns to update data.');
+		}
+		
+		$valuesString = preg_replace('/, $/', '', $valuesString);
+
+		$query = 'UPDATE ';
+		$query .= $this->_getTableQueryPart($table);
+		$query .= ' SET ' . $valuesString;
+		$query .= $this->_getConditionsQueryPart($additionalData['conditions']);
+		$query .= $this->_getLimitQueryPart($additionalData['limit']);
+		$query .= $this->_getOffsetQueryPart($additionalData['offset']);
+		
+		return $query;
 	}
 	
 	public function buildDeleteQuery(string $table, array $data): string
 	{
 		extract($data);
 		
-		try
-		{
-															$query = 'DELETE FROM ';
-															$query .= $this->_getTableQueryPart($table);
-			if (isset($conditions) && !empty($conditions)) 	$query .= $this->_getConditionsQueryPart($conditions);
-			if (isset($limit) && !empty($limit)) 			$query .= $this->_getLimitQueryPart($limit);
-			if (isset($offset) && !empty($offset)) 			$query .= $this->_getOffsetQueryPart($offset);
-			
-			return $query;
-		}
-		catch (\Exception $e)
-		{
-			die($e->getMessage());
-		}
+		$query = 'DELETE FROM ';
+		$query .= $this->_getTableQueryPart($table);
+		$query .= $this->_getConditionsQueryPart($conditions);
+		$query .= $this->_getLimitQueryPart($limit);
+		$query .= $this->_getOffsetQueryPart($offset);
+		
+		return $query;
 	}
 	
 	public function buildQuery(array $data, array $queryParts = []): string
@@ -406,65 +463,118 @@ class Database2
 	
 	private function _getValuesQueryPart($values): string
 	{
-		if (is_string($values))
+		if ($values === null)
+		{
+			return '*';
+		}
+		else if (is_string($values))
 		{
 			$values = trim($values);
 
-			return (!empty($values)) ? (' ' . $values) : ' *';
+			return ($values !== '') ? $values : '*';
 		}
 		else if (is_array($values))
 		{
-			// $reduceCallable = function(string $carry, string $item) {
-			// 	$item = trim($item);
-			// 	return (!empty($item)) ? ($carry . ', ' . $item) : $carry;
-			// };
+			$result = '';
 
-			// return ' ' . ltrim(array_reduce($arr, 'reduceCallable'), ', ');
+			foreach ($values as $value)
+			{
+				if (!is_string($value))
+				{
+					throw new \Exception("All values in array must be type 'string'.");
+				}
+				else if (empty($value = trim($value)))
+				{
+					continue;
+				}
+				else if (!preg_match('#^[a-zA-Z_][0-9a-zA-Z_\.]+$#', $value))
+				{
+					throw new \Exception('Some of given values contains forbidden characters.');
+				}
+				else
+				{
+					$result .= ' ' . $value . ',';
+				}
+			}
 
-			return ' ' . implode(', ', array_map('trim', array_filter($values, fn(string $a) => !empty(trim($a)))));
+			if (empty($result))
+			{
+				return '*';
+			}
+			else
+			{
+				return ltrim(rtrim($result, ','), ' ');
+			}
 		}
 		else 
 		{
 			throw new \Exception("Values must be type 'string' or " . 
-								 "'array', not " . gettype($values) . ".");
+								 "'array', not '" . gettype($values) . "'.");
 		}
 	}
 	
-	private function _getTableQueryPart(string $table): string
+	private function _getTableQueryPart(?string $table): string
 	{
-		$table = trim($table);
-		
-		if (empty($table))
+		if ($table === null || ($table = trim($table)) === '')
 		{
 			throw new \Exception('Table name is required.');
 		}
-		
-		return $table;
+		else if (strpos($table, ' '))
+		{
+			throw new \Exception('Table name cannot contain white characters.');
+		}
+		else if (!preg_match('#^[a-zA-Z_][0-9a-zA-Z_]*$#', $table))
+		{
+			throw new \Exception('Table name contains forbidden characters.');
+		}
+		else
+		{
+			return $table;
+		}
 	}
 	
-	private function _getConditionsQueryPart(string $conditions): string
+	private function _getConditionsQueryPart(?string $conditions): string
 	{
-		return ' WHERE ' . $conditions;
+		if ($conditions === null || ($conditions = trim($conditions)) === '')
+		{
+			return '';
+		}
+		else
+		{
+			return ' WHERE ' . $conditions;
+		}
 	}
 	
-	private function _getLimitQueryPart(int $limit): string
+	private function _getLimitQueryPart(?int $limit = null): string
 	{
-		if ($limit < 0)
+		if ($limit === null)
+		{
+			return '';
+		}
+		else if ($limit < 0)
 		{
 			throw new \Exception('Limit must be equal or greater than 0.');
 		}
-
-		return ' LIMIT ' . $limit;
+		else 
+		{
+			return ' LIMIT ' . $limit;
+		}
 	}
 	
-	private function _getOffsetQueryPart(int $offset): string
+	private function _getOffsetQueryPart(?int $offset = null): string
 	{
-		if ($offset < 0)
+		if ($offset === null)
+		{
+			return '';
+		}
+		else if ($offset < 0)
 		{
 			throw new \Exception('Offset must be equal or greater than 0.');
 		}
-
-		return ' OFFSET ' . $offset;
+		else
+		{
+			return ' OFFSET ' . $offset;
+		}
 	}
 	
 	public function getLastExecutedQuery(): ?string

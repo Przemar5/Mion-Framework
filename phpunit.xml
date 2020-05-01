@@ -2,7 +2,10 @@
 <phpunit bootstrap="vendor/autoload.php"
 		 colors="true"
 		 verbose="true"
-		 stopOnFailure="false">
+		 stopOnFailure="false"
+		 convertErrorsToExceptions="true"
+         convertNoticesToExceptions="true"
+         convertWarningsToExceptions="true">
 	<testsuites>
 		<testsuite name="Test suite">
 			<directory>tests</directory>
