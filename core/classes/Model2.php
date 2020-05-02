@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Core\Classes;
 use Core\Classes\Database;
 use App\Models\UserModel;
@@ -15,26 +17,26 @@ class Model2
 	protected array $_tableData;
 			
 	
-	public function __construct($table)
+	public function __construct(string $table)
 	{
 		$this->_db = Database2::getInstance();
 		$this->_table = $table;
 		$this->_softDelete = true;
 	}
 	
-	public static function load($modelName)
+	public static function load(string $modelName): self
 	{
 		$model = self::fullName($modelName);
 		
 		return new $model;
 	}
 	
-	public static function fullName($model)
+	public static function fullName(string $model): string
 	{
 		return MODELS_NAMESPACE . $model . 'Model';
 	}
 
-	public function getTableData()
+	public function getTableData(): array
 	{
 		if (!empty($this->_tableData))
 		{

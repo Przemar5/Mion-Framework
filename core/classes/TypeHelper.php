@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Core\Classes;
 
 
 class TypeHelper
 {
-	public static function valid($value, $types = ['string', 'integer', 'float'])
+	public static function valid($value, array $types = ['string', 'integer', 'float']): bool
 	{
 		$result = false;
 		
@@ -24,7 +26,7 @@ class TypeHelper
 	 * args:	argument of any type
 	 * return:	InvalidTypeException
 	 */
-	public static function getException($arg, $types = ['string', 'integer', 'float'])
+	public static function getException($arg, array $types = ['string', 'integer', 'float']): Exceptions\InvalidTypeException
 	{
 		$backtrace = debug_backtrace()[0];
 		

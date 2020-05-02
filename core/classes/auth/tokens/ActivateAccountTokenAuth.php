@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Core\Classes\Auth\Tokens;
 use Core\Classes\Auth\Tokens\TokenAuth;
 use Core\Classes\Auth\Tokens\UrlTokenAuth;

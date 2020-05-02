@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Core\Classes\Validators;
 use Core\Abstracts\Validator;
 
@@ -9,7 +11,7 @@ class RequiredValidator extends Validator
 	public $value;
 	
 	
-	public function __construct($data)
+	public function __construct(array $data)
 	{
 		parent::__construct();
 		
@@ -17,7 +19,7 @@ class RequiredValidator extends Validator
 		$this->errorMsg = $data['msg'];
 	}
 	
-	public function validate($value = null)
+	public function validate($value = null): bool
 	{
 		$this->success = true;
 		$this->value = (!empty($value)) ? $value : $this->value;

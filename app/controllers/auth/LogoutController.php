@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace App\Controllers\Auth;
 use Core\Classes\Auth\Tokens\RememberMeTokenAuth;
 use Core\Classes\Controller;
@@ -14,7 +16,7 @@ class LogoutController extends Controller
 		parent::__construct();
 	}
 	
-	public function index_action()
+	public function index_action(): void
 	{
 		$userId = Session::get(SESSION_USER_ID_NAME);
 		RememberMeTokenAuth::forgetUser($userId);

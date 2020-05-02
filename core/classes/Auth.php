@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Core\Classes;
 use Core\Classes\Cookie;
 use Core\Classes\Session;

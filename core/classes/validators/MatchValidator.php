@@ -1,15 +1,18 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Core\Classes\Validators;
 use Core\Abstracts\Validator;
 
 
 class MatchValidator extends Validator
 {
-	public $first, $second;
+	public string $first;
+	public $second;
 	
 	
-	public function __construct($data)
+	public function __construct(array $data)
 	{
 		parent::__construct();
 		
@@ -18,7 +21,7 @@ class MatchValidator extends Validator
 		$this->errorMsg = $data['msg'];
 	}
 	
-	public function validate($second = null)
+	public function validate($second = null): bool
 	{
 		$this->success = true;
 		$this->second = (!empty($second)) ? $second : $this->second;

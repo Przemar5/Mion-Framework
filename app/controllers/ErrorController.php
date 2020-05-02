@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace App\Controllers;
 use Core\Classes\Controller;
 
@@ -11,12 +13,12 @@ class ErrorController extends Controller
 		parent::__construct();
 	}
 	
-	public function error($code)
+	public function error(int $code): void
 	{
 		$this->{'error_' . $code}();
 	}
 	
-	public function error_404()
+	public function error_404(): void
 	{
 		echo 'ERROR 404';
 	}

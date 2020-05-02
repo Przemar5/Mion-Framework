@@ -656,7 +656,7 @@ class Database2Test extends TestCase
 	}
 
 	/** @test */
-	public function buildSelectQuery_generates_query_in_correct_order()
+	public function buildSelectQuery_generates_query_with_parts_in_correct_order()
 	{
 		$data = [
 			'table' => 'my_table',
@@ -674,6 +674,26 @@ class Database2Test extends TestCase
 
 		$this->assertEquals($query, $data['output']);
 	}
+
+	/** @test */
+	public function BuildSelectQuery_accepts_conditions_array_for_creating_complex_query()
+	{
+		$data = [
+			'table' => 'friend',
+			'input_array' => [
+				'conditions' => [
+					'id' => [
+						'friend_coworker' => 'id'
+					]
+				]
+			]
+		];
+
+		$query = $this->db->buildSelectQuery($data['table'], $data['input_array']);
+
+		$this->assertEquals($query, $data['output']);
+	}
+
 
 
 	// buildInsertQuery
@@ -1062,7 +1082,7 @@ class Database2Test extends TestCase
 	}
 
 	/** @test */
-	public function buildUpdateQuery_generates_query_in_correct_order()
+	public function buildUpdateQuery_generates_query_with_parts_in_correct_order()
 	{
 		$data = [
 			'table' => 'my_table',
@@ -1084,4 +1104,46 @@ class Database2Test extends TestCase
 
 		$this->assertEquals($query, $data['output']);
 	}
+
+
+	// buildDeleteQuery
+
+	/** @test */
+	public function buildDeleteQuery_throws_exception_when_not_passing_conditions()
+	{
+		$data = [
+			'table' => 'my_table',
+			'input_array' => [],
+			'output' => 'You must specify conditions to delete database record.'
+		];
+
+		$this->expectException(\Exception::class);
+		$this->expectExceptionMessage($data['output']);
+
+		$query = $this->db->buildDeleteQuery($data['table'], $data['input_array']);
+	}
+
+	/** @test */
+	public function buildDeleteQuery_generates_query_with_parts_in_correct_order()
+	{
+		$data = [
+			'table' => 'my_table',
+			'input_array' => [
+				'offset' => 2,
+				'limit' => 3,
+				'conditions' => 'my_table.id > 10'
+			],
+			'output' => 'DELETE FROM my_table WHERE my_table.id > 10 LIMIT 3 OFFSET 2'
+		];
+
+		$query = $this->db->buildDeleteQuery($data['table'], $data['input_array']);
+
+		$this->assertEquals($query, $data['output']);
+	}
+
+
+	// select
+
+	/** @test */
+
 }

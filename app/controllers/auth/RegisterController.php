@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace App\Controllers\Auth;
 use Core\Classes\Auth\Tokens\ActivateAccountTokenAuth;
 use Core\Classes\Auth\Tokens\CsrfTokenAuth;
@@ -20,7 +22,7 @@ class RegisterController extends Controller
 		parent::__construct();
 	}
 	
-	public function index_action()
+	public function index_action(): void
 	{
 		$this->view->errors = Session::pop('register_errors');
 		$this->view->user = Form::getValues(['username', 'email', 
@@ -28,7 +30,7 @@ class RegisterController extends Controller
 		$this->view->render('auth/register/index');
 	}
 	
-	public function verify_action()
+	public function verify_action(): void
 	{
 		if (isset($_POST) && !empty($_POST))
 		{

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace App\Controllers\Auth;
 use Core\Classes\Auth\Tokens\CsrfTokenAuth;
 use Core\Classes\Auth\Tokens\RememberMeTokenAuth;
@@ -22,7 +24,7 @@ class LoginController extends Controller
 		parent::__construct();
 	}
 	
-	public function index_action()
+	public function index_action(): void
 	{
 		$this->view->error = Session::pop('login_error');		
 		$this->view->user = Form::getValues(['username', 'remember_me']);
@@ -30,7 +32,7 @@ class LoginController extends Controller
 		$this->view->render('auth/login/index');
 	}
 	
-	public function verify_action()
+	public function verify_action(): void
 	{
 		if (isset($_POST) && !empty($_POST))
 		{
@@ -75,7 +77,7 @@ class LoginController extends Controller
 		Router::redirect('login');
 	}
 	
-	private function _rememberUser($userId)
+	private function _rememberUser($userId): void
 	{
 		$tokenModel = Model::load('token');
 		$token = RememberMeTokenAuth::generate(50);

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Core\Classes;
 use Core\Classes\Cookie;
 use Core\Classes\Helper;
@@ -14,7 +16,7 @@ class Form extends HTML
 		
 	}
 	
-	public static function saveValues($fields, $secure = false)
+	public static function saveValues(array $fields, ?bool $secure = false): void
 	{
 		$prefix = 'form_';
 		
@@ -35,7 +37,7 @@ class Form extends HTML
 			Cookie::set($prefix . 'security', 1);
 	}
 	
-	public static function getValues($fields)
+	public static function getValues(array $fields)
 	{
 		$prefix = 'form_';
 		$values = (object) [];
@@ -56,7 +58,7 @@ class Form extends HTML
 		return $values;
 	}
 	
-	public static function csrf()
+	public static function csrf(): string
 	{
 		$name = SESSION_CSRF_NAME;
 		$token = Auth::csrfToken();
@@ -64,7 +66,7 @@ class Form extends HTML
 		return '<input type="hidden" name="csrf" value="' . $token . '"/>';
 	}
 	
-	public static function token($name)
+	public static function token(string $name): string
 	{
 		if ($name = 'reset_password')
 		{

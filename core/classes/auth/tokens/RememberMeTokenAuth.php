@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Core\Classes\Auth\Tokens;
 use Core\Classes\Auth\Tokens\TokenAuth;
 use Core\Classes\Cookie;
@@ -10,7 +12,7 @@ use App\Models\TokenModel;
 
 class RememberMeTokenAuth extends TokenAuth
 {
-	public static function rememberUser($userId)
+	public static function rememberUser($userId): void
 	{
 		$tokenModel = Model::load('token');
 		$token = self::token(50);
@@ -24,12 +26,12 @@ class RememberMeTokenAuth extends TokenAuth
 		Cookie::set(COOKIE_REMEMBER_ME_NAME, $token, COOKIE_REMEMBER_ME_EXPIRY);
 	}
 	
-	public static function isRememberedUser()
+	public static function isRememberedUser(): bool
 	{
 		return Cookie::exists(COOKIE_REMEMBER_ME_NAME);
 	}
 	
-	public static function forgetUser($userId)
+	public static function forgetUser($userId): void
 	{
 		$tokenModel = Model::load('token');
 		$data = [
@@ -41,7 +43,7 @@ class RememberMeTokenAuth extends TokenAuth
 		Cookie::delete(COOKIE_REMEMBER_ME_NAME);
 	}
 	
-	public static function getRememberedUser()
+	public static function getRememberedUser(): void
 	{
 		$token = Cookie::get(COOKIE_REMEMBER_ME_NAME);
 		$tokenModel = Model::load('token');

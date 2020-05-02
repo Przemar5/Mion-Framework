@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace App\Controllers;
 use Core\Classes\Controller;
 
@@ -11,7 +13,7 @@ class RestrictedController extends Controller
 		parent::__construct();
 	}
 	
-	public function index_action()
+	public function index_action(): void
 	{
 		$this->view->render('restricted/index');
 	}

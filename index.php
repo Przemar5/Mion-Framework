@@ -97,11 +97,28 @@ spl_autoload_register('autoload');
 // There wasn't any output before, so session could start here
 Session::start();
 
-$model = new Model2('users');
 
-dd($model);
 
+
+$db = new Database2();
+$table = 'first_table';
+$data = [
+	'values' => 'first_table.name, second_table.email',
+	'as' => 't',
+	'join' => [
+		'table' => 'second_table',
+		'as' => 'ft',
+		'on' => 'second_table.id = first_table.id'
+	]
+];
+
+echo $db->buildSelectQuery($table, $data);
 die;
+
+
+
+
+
 if (!Session::exists(SESSION_USER_ID_NAME) && 
 	Cookie::exists(COOKIE_REMEMBER_ME_NAME))
 	Auth::getRememberedUser();

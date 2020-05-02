@@ -1,15 +1,18 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Core\Classes\Validators;
 use Core\Abstracts\Validator;
 
 
 class MinValidator extends Validator
 {
-	public $value, $min;
+	public $value;
+	public int $min;
 	
 	
-	public function __construct($data)
+	public function __construct(array $data)
 	{
 		parent::__construct();
 		
@@ -18,7 +21,7 @@ class MinValidator extends Validator
 		$this->errorMsg = $data['msg'];
 	}
 	
-	public function validate($value = null)
+	public function validate($value = null): bool
 	{
 		$this->success = true;
 		$this->value = (!empty($value)) ? $value : $this->value;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace App\Controllers\Auth;
 use Core\Classes\Auth\Tokens\CsrfTokenAuth;
 use Core\Classes\Controller;
@@ -17,7 +19,7 @@ class ForgotPasswordController extends Controller
 		parent::__construct();
 	}
 	
-	public function index_action()
+	public function index_action(): void
 	{
 		$this->view->error = Session::pop('forgot_password_error');		
 		$this->view->user = Form::getValues(['email']);
@@ -25,7 +27,7 @@ class ForgotPasswordController extends Controller
 		$this->view->render('auth/forgot_password/index');
 	}
 	
-	public function verify_action()
+	public function verify_action(): void
 	{
 		if (isset($_POST) && !empty($_POST))
 		{

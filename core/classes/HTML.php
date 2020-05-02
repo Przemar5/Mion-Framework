@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Core\Classes;
 
 
@@ -7,12 +9,12 @@ namespace Core\Classes;
 
 class HTML
 {
-	public function tag($data)
+	public function tag(array $data = []): void
 	{
 		self::getAttrsString($data);
 	}
 
-	public static function link($inputData)
+	public static function link(array $inputData): string
 	{
 	    $linkText = self::pop($inputData['text']);
 	    $attrs = self::stringifyAttrs($inputData);
@@ -20,14 +22,14 @@ class HTML
         return '<a' . $attrs . '/>' . $linkText . '</a>';
 	}
 	
-	public static function input($inputData)
+	public static function input(array $inputData = []): string
 	{
 		$attrs = self::stringifyAttrs($inputData);
 		
 		return '<input' . $attrs . '/>';
 	}
 
-	public static function textarea($inputData)
+	public static function textarea(array $inputData = []): string
     {
         $text = self::pop($inputData['text']);
         $attrs = self::stringifyAttrs($inputData);
@@ -35,35 +37,35 @@ class HTML
         return '<textarea' . $attrs . '>' . $text . '</textarea>';
     }
 	
-	public static function hidden($inputData)
+	public static function hidden(array $inputData = []): string
 	{
         $attrs = self::stringifyAttrs($inputData);
 
         return '<input type="hidden"' . $attrs . '>';
 	}
 
-	public static function button($inputData)
+	public static function button(array $inputData = []): string
 	{
 		$attrs = self::stringifyAttrs($inputData);
 
 		return '<input type="button"' . $attrs . '/>';
 	}
 	
-	public static function reset($inputData)
+	public static function reset(array $inputData = []): string
 	{
 		$attrs = self::stringifyAttrs($inputData);
 		
 		return '<input type="reset"' . $attrs . '/>';
 	}
 	
-	public static function submit($inputData)
+	public static function submit(array $inputData = []): string
 	{
 		$attrs = self::stringifyAttrs($inputData);
 		
 		return '<input type="submit"' . $attrs . '/>';
 	}
 
-	public static function select($inputData)
+	public static function select(array $inputData): string
     {
         $options = self::pop($inputData['options']);
         unset($inputData['options']);
@@ -100,14 +102,14 @@ class HTML
         return $html;
     }
 
-    public static function multiselect($inputData)
+    public static function multiselect(array $inputData): string
     {
         $inputData['multiple'] = 'multiple';
 
         return self::select($inputData);
     }
 
-	public static function checkbox($inputData, $labelData = [])
+	public static function checkbox(array $inputData = [], array $labelData = []): string
 	{
         $attrs = self::stringifyAttrs($inputData);
 		
@@ -129,7 +131,7 @@ class HTML
 		return $html;
 	}
 	
-    public static function block($type, $inputData, $blockData)
+    public static function block(string $type, array $inputData = [], array $blockData = []): string
     {
         $blockText = self::pop($blockData['text']);
         $blockAttrs = self::stringifyAttrs($blockData);
@@ -153,37 +155,37 @@ class HTML
         return $html;
     }
 	
-	public static function inputBlock($inputData, $blockData)
+	public static function inputBlock(array $inputData = [], array $blockData = []): string
 	{
         return self::block('input', $inputData, $blockData);
 	}
 
-	public static function textareaBlock($inputData, $blockData)
+	public static function textareaBlock(array $inputData = [], array $blockData)
 	{
         return self::block('textarea', $inputData, $blockData);
 	}
 
-	public static function buttonBlock($inputData, $blockData)
+	public static function buttonBlock(array $inputData = [], array $blockData)
     {
         return self::block('button', $inputData, $blockData);
     }
 
-	public static function submitBlock($inputData, $blockData)
+	public static function submitBlock(array $inputData = [], array $blockData)
     {
         return self::block('submit', $inputData, $blockData);
     }
 
-	public static function selectBlock($inputData, $blockData)
+	public static function selectBlock(array $inputData = [], array $blockData)
     {
         return self::block('select', $inputData, $blockData);
     }
 
-	public static function multiselectBlock($inputData, $blockData)
+	public static function multiselectBlock(array $inputData = [], array $blockData)
     {
         return self::block('multiselect', $inputData, $blockData);
     }
 	
-	public static function checkboxBlock($inputData, $labelData = [], $blockData = [])
+	public static function checkboxBlock(array $inputData = [], array $labelData = [], array $blockData = [])
     {
         $blockAttrs = self::stringifyAttrs($blockData);
 		
@@ -194,7 +196,7 @@ class HTML
         return $html;
 	}
 
-	public static function errors($errors)
+	public static function errors($errors): string
     {
         $result = '';
 
@@ -222,7 +224,7 @@ class HTML
         return $result;
     }
 
-    public static function pagination($tabs = 4, $active = 1, $urlStart = '', $urlEnd = '')
+    public static function pagination(int $tabs = 4, int $active = 1, ?string $urlStart = '', ?string $urlEnd = ''): string
     {
         $html = '';
 
@@ -259,7 +261,7 @@ class HTML
         return $html;
     }
 	
-	public static function stringifyAttrs($data)
+	public static function stringifyAttrs(array $data): string
 	{
 		$result = '';
 		
@@ -271,7 +273,7 @@ class HTML
 		return $result;
 	}
 
-	private static function pop(&$data)
+	private static function pop(&$data): string
     {
         $result = null;
 

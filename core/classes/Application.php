@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Core\Classes;
 
 
@@ -12,7 +14,7 @@ class Application
 	
 	private function _unregisterGlobals()
 	{
-		if (ini_set('register_globals', true))
+		if (ini_set('register_globals', '1'))
 		{
 			return;
 		}

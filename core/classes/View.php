@@ -1,23 +1,25 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Core\Classes;
 use Core\Classes\Session;
 
 
 class View
 {
-	protected 	$_outputBuffer,
-				$_title = SITE_TITLE,
-				$_layout = DEFAULT_LAYOUT,
-				$_head,
-				$_body;
+	protected string $_outputBuffer;
+	protected string $_title = SITE_TITLE;
+	protected string $_layout = DEFAULT_LAYOUT;
+	protected string $_head;
+	protected string $_body;
 	
 	public function __construct()
 	{
 		
 	}
 	
-	public function render($subPath)
+	public function render(string $subPath): void
 	{
 		$subPath = implode(DS, explode('/', $subPath));
 		$path = ROOT . DS . 'app' . DS . 'views' . DS . $subPath . '.php';
@@ -30,7 +32,7 @@ class View
 		}
 	}
 	
-	public function content($type)
+	public function content(string $type): string
 	{
 		if ($type === 'head')
 		{
@@ -42,7 +44,7 @@ class View
 		}
 	}
 	
-	public function start($type)
+	public function start(string $type): void
 	{
 		if ($type === 'head' || $type === 'body')
 		{
@@ -52,7 +54,7 @@ class View
 		}
 	}
 	
-	public function end()
+	public function end(): void
 	{
 		if ($this->_outputBuffer === 'head')
 		{
@@ -64,7 +66,7 @@ class View
 		}
 	}
 	
-	public function include($element)
+	public function include(string $element): void
 	{
 		$path = ROOT . DS . 'app' . DS . 'views' . DS . 'includes' . DS . $element . '.php';
 		
@@ -74,12 +76,12 @@ class View
 		}
 	}
 	
-	public function setSiteTitle($title)
+	public function setSiteTitle(string $title): void
 	{
 		$this->_title = $title;
 	}
 	
-	public function siteTitle()
+	public function siteTitle(): string
 	{
 		return $this->_title;
 	}

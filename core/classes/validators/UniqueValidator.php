@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Core\Classes\Validators;
 use Core\Abstracts\Validator;
 use Core\Classes\Model;
@@ -7,10 +9,13 @@ use Core\Classes\Model;
 
 class UniqueValidator extends Validator
 {
-	public $value, $model, $table, $column;
+	public $value;
+	public Model $model;
+	public string $table;
+	public string $column;
 	
 	
-	public function __construct($data)
+	public function __construct(array $data)
 	{
 		parent::__construct();
 		
@@ -21,7 +26,7 @@ class UniqueValidator extends Validator
 		$this->model = new Model($this->table);
 	}
 	
-	public function validate($value = null)
+	public function validate($value = null): bool
 	{
 		$this->success = true;
 		$this->value = (!empty($value)) ? $value : $this->value;

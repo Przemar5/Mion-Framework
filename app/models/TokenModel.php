@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace App\Models;
 use Core\Classes\Model;
 
@@ -14,7 +16,7 @@ class TokenModel extends Model
 		$this->_primaryKey = 'id';
 	}
 	
-	public function findByToken($name, $value, $class = false)
+	public function findByToken(string $name, $value, ?bool $class = false)
 	{
 		$regex = '/^[0-9a-zA-Z\/\_\-\+\=]+$/';
 		

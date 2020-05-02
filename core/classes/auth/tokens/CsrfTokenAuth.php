@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Core\Classes\Auth\Tokens;
 use Core\Classes\Auth\Tokens\TokenAuth;
 use Core\Classes\Session;
@@ -8,7 +10,7 @@ use App\Models\TokenModel;
 
 class CsrfTokenAuth extends TokenAuth
 {
-	public static function get($length = 50, $secure = false)
+	public static function get(?int $length = 50, ?bool $secure = false): string
 	{
 		$token = base64_encode(openssl_random_pseudo_bytes($length));
 		
@@ -28,13 +30,13 @@ class CsrfTokenAuth extends TokenAuth
 		return $token;
 	}
 	
-	public static function check()
+	public static function check(): bool
 	{
 		return Session::exists(SESSION_CSRF_NAME) && 
 			Session::get(SESSION_CSRF_NAME) === $_POST['csrf'];
 	}
 	
-	public static function delete()
+	public static function delete(): void
 	{
 		Session::unset(SESSION_CSRF_NAME);
 	}

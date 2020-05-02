@@ -16,6 +16,7 @@ class Database2
 				  DB_PASSWORD = '',
 				  DB_NAME = 'play_and_learn',
 				  DB_CHARSET = 'utf8';
+
 	private \PDO $_pdo;
 	private \PDOStatement $_stmt;
 	private mixed $_result;
@@ -61,7 +62,7 @@ class Database2
 		$this->_stmt->debugDumpParams();
 	}
 	
-	public function select(string $table, array $data, bool $fetch = true, array $fetchOptions = [], bool $checkBeforeFetch = false): mixed
+	public function select(string $table, array $data, ?bool $fetch = true, ?array $fetchOptions = [], ?bool $checkBeforeFetch = false)
 	{
 		try
 		{
@@ -327,6 +328,8 @@ class Database2
 		$query .= $this->_getValuesQueryPart($values);
 		$query .= ' FROM ';
 		$query .= $this->_getTableQueryPart($table);
+		$query .= $this->_getAsQueryPart($as);
+		$query .= $this->_getJoinQueryPart($join);
 		$query .= $this->_getConditionsQueryPart($conditions);
 		$query .= $this->_getLimitQueryPart($limit);
 		$query .= $this->_getOffsetQueryPart($offset);
@@ -420,6 +423,7 @@ class Database2
 
 		$query = 'UPDATE ';
 		$query .= $this->_getTableQueryPart($table);
+		$query .= $this->_getAsQueryPart($as);
 		$query .= ' SET ' . $valuesString;
 		$query .= $this->_getConditionsQueryPart($additionalData['conditions']);
 		$query .= $this->_getLimitQueryPart($additionalData['limit']);
@@ -431,9 +435,15 @@ class Database2
 	public function buildDeleteQuery(string $table, array $data): string
 	{
 		extract($data);
+
+		if (!isset($conditions))
+		{
+			throw new \Exception('You must specify conditions to delete database record.');
+		}
 		
 		$query = 'DELETE FROM ';
 		$query .= $this->_getTableQueryPart($table);
+		$query .= $this->_getAsQueryPart($as);
 		$query .= $this->_getConditionsQueryPart($conditions);
 		$query .= $this->_getLimitQueryPart($limit);
 		$query .= $this->_getOffsetQueryPart($offset);
@@ -531,6 +541,99 @@ class Database2
 		{
 			return $table;
 		}
+	}
+
+	private function _getAsQueryPart(?string $asName): string
+	{
+		if ($asName === null)
+		{
+			return '';
+		}
+		else if (!is_string($asName))
+		{
+			throw new \Exception("Table could be named as string value, " . 
+								"not as '" . gettype($join['as']) . '".');
+		}
+		else if (($asName = trim($asName)) === '')
+		{
+			return '';
+		}
+		else
+		{
+			return ' AS ' . $asName;
+		}
+	}
+
+	private function _getJoinQueryPart(?array $join): string
+	{
+		$validJoinTypes = ['LEFT', 'RIGHT', 'INNER', 'OUTER', 'FULL OUTER'];
+		$queryPart = '';
+
+		if (array_key_exists('type', $join))
+		{
+			$join['type'] = trim($join['type']);
+			$possibilityCount = count($validJoinTypes);
+
+			foreach ($validJoinTypes as $validType)
+			{
+				if (strcasecmp($join['type'], $validType) === 0)
+				{
+					$queryPart = $validType;
+				}
+			}
+
+			try
+			{
+				if ($possibilityCount === 0)
+				{
+					throw new \Exception("Given join type isn't valid.");
+				}
+			}
+			catch (\Exception $e)
+			{
+				die($e->getMessage());
+			}
+		}
+
+		$queryPart .= ' JOIN ';
+		$queryPart .= $this->_getTableQueryPart($join['table']);
+
+		if (isset($join['as']))
+		{
+			$queryPart .= $this->_getAsQueryPart($join['as']);
+		}
+
+		if (!isset($join['on']))
+		{
+			throw new \Exception("You must specify on which tables are joined ('on' clause).");
+		}
+		else if (!is_string($join['on']))
+		{
+			throw new \Exception("You must specify parameters on which tables are ' . 
+								'joined as 'string', not '" . gettype($join['on']) . "'.");
+		}
+		else if (($join['on'] = trim($join['on'])) === '')
+		{
+			throw new \Exception("You must specify on which tables are joined ('on' clause).");
+		}
+		else
+		{
+			$queryPart .= ' ON ' . $join['on'];
+		}
+
+		if (isset($join['join']) && !empty($join['join']))
+		{
+			if (!is_array($join['join']))
+			{
+				throw new \Exception("If you want to execute multiple join, your join " . 
+									"parameter should be type 'array', not '" . 
+									gettype($join['join']) . "'.");
+			}
+
+			$queryPart .= $this->_getJoinQueryPart($join['join']);
+		}
+
+		return $queryPart;
 	}
 	
 	private function _getConditionsQueryPart(?string $conditions): string

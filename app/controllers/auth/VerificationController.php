@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace App\Controllers\Auth;
 use Core\Classes\Auth\Tokens\ResetPasswordTokenAuth;
 use Core\Classes\Controller;
@@ -14,7 +16,7 @@ class VerificationController extends Controller
 		parent::__construct();
 	}
 	
-	public function reset_password_action()
+	public function reset_password_action(): void
 	{
 		if (!isset($_GET['token']) || empty($_GET['token']))
 		{
@@ -35,7 +37,7 @@ class VerificationController extends Controller
 		exit;
 	}
 	
-	public function activate_account_action()
+	public function activate_account_action(): void
 	{
 		if (!isset($_GET['token']) || empty($_GET['token']))
 		{

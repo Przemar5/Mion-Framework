@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace App\Models;
 use Core\Classes\Hash;
 use Core\Classes\Model;
@@ -20,7 +22,7 @@ class UserModel extends Model
 		$this->_tableProperties = ['id', 'username', 'email', 'first_name', 'last_name', 'password'];
 	}
 	
-	public function findUser($username)
+	public function findUser(string $username)
 	{
 		$data = [
 			'bind' => [$username],
@@ -30,7 +32,7 @@ class UserModel extends Model
 		return $this->findFirst($data);
 	}
 	
-	public function findEmail($email)
+	public function findEmail(string $email)
 	{
 		$data = [
 			'bind' => [$email],
@@ -68,14 +70,14 @@ class UserModel extends Model
 		return (Model::load('user'))->findFirst($data);
 	}
 	
-	public function setSession()
+	public function setSession(): void
 	{
 		Session::regenerateId();
 		Session::set(SESSION_USER_ID_NAME, $this->id);
 		Session::set(SESSION_USER_ACL_NAME, $this->acl);
 	}
 	
-	public function changePassword($password, $rePassword)
+	public function changePassword(string $password, string $rePassword)
 	{
 		$this->loadValidationRules();
 		$this->_validationRules['password']['match'] = [
@@ -97,7 +99,7 @@ class UserModel extends Model
 		}
 	}
 	
-	public function register()
+	public function register(): bool
 	{
 		$this->loadValidationRules();
 		$this->validationRules['password']['match'] = [
@@ -125,7 +127,7 @@ class UserModel extends Model
 		}
 	}
 	
-	public function errors()
+	public function errors(): ?array
 	{
 		return $this->_errors;
 	}

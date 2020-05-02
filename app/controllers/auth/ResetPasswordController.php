@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace App\Controllers\Auth;
 use Core\Classes\Auth\Tokens\CsrfAuthToken;
 use Core\Classes\Controller;
@@ -17,13 +19,13 @@ class ResetPasswordController extends Controller
 		parent::__construct();
 	}
 	
-	public function index_action()
+	public function index_action(): void
 	{
 		$this->view->error = Session::pop('reset_password_error');	
 		$this->view->render('auth/reset_password/index');
 	}
 	
-	public function verify_action()
+	public function verify_action(): void
 	{
 		if (isset($_POST) && !empty($_POST))
 		{

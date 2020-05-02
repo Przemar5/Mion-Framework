@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Core\Classes;
 use Core\Classes\View;
 use Core\Classes\Model;
@@ -17,7 +19,7 @@ class Controller extends Application
 		$this->view = new View;
 	}
 	
-	public static function get($name)
+	public static function get(string $name): string
 	{
 		$path = CONTROLLERS_NAMESPACE . $name;
 		
@@ -34,7 +36,7 @@ class Controller extends Application
 		}
 	}
 	
-	public function loadModel($table)
+	public function loadModel(string $table): void
 	{
 		$this->{$table . 'Model'} = Model::load($table);
 	}

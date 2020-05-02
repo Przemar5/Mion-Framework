@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Core\Classes\Emails;
 use Core\Abstracts\Email;
 use Core\Classes\Auth;
@@ -12,7 +14,7 @@ class ActivateAccountEmail extends Email
 		parent::__construct();
 	}
 	
-	public function prepare($data)
+	public function prepare(array $data): void
 	{
 		$this->data = $this->arrayToObject($data);
 		$this->subject = 'Registration Confirm';
@@ -20,7 +22,7 @@ class ActivateAccountEmail extends Email
 		$this->_getMessage();
 	}
 	
-	private function _getHeaders()
+	private function _getHeaders(): void
 	{
 		$this->headers = "From: " . SITE_TITLE . "\r\n";
 		$this->headers .= "Reply-To: noreply@example.com\r\n";
@@ -29,7 +31,7 @@ class ActivateAccountEmail extends Email
 		$this->headers .= "Content-Type: text/html; charset=ISO-8859-1\r\n";
 	}
 	
-	private function _getMessage()
+	private function _getMessage(): void
 	{
 		$this->view->data = $this->data->message ?? null;
 		
